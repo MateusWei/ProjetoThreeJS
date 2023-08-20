@@ -21,7 +21,7 @@ function createPlanete(scene, size, texture, position, ring) {
             side: THREE.DoubleSide
         });
         const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-        ringMesh.castShadow = true;
+        //ringMesh.castShadow = true;
         ringMesh.receiveShadow = true;
         obj.add(ringMesh);
         ringMesh.position.set(position.x, position.y, position.z);

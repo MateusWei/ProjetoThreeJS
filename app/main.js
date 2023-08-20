@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { FlyControls } from 'three/addons/controls/FlyControls.js';
+// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+// import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { createPlanete } from './space';
 
 import starsTexture from '../assets/stars.jpg';
 import sunTexture from '../assets/sun.jpg';
@@ -15,20 +16,99 @@ import uranusTexture from '../assets/uranus.jpg';
 import uranusRingTexture from '../assets/uranus ring.png';
 import neptuneTexture from '../assets/neptune.jpg';
 import plutoTexture from '../assets/pluto.jpg';
-
-import { VRButton } from 'three/addons/webxr/VRButton.js';
-import { createPlanete } from './space';
+import { createPlayer } from './player';
 
 let sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, pluto;
-let canvas, center, renderer, camera, scene, controls;
+let canvas, center, renderer, camera, scene, controls, player, vida, oxigenio, combustivel;
+
+let moveForward = false;
+let rotateUp = false;
+let rotateDown = false;
+let rotateLeft = false;
+let rotateRight = false;
+
+let life = 0.5;
+let combust = 0.5;
+let oxi = 0.5;
+
+const moveSpeed = 0.05;
+const rotationSpeed = 0.01;
+
 
 const start = document.querySelector('#start');
-start.addEventListener('click', function(){
+start.addEventListener('click', function () {
 	document.querySelector('#menu').style.display = 'none';
 	main();
 })
 
+document.addEventListener('keydown', onKeyDown, false);
+document.addEventListener('keyup', onKeyUp, false);
+
+function updateCameraMovement() {
+	if (!player) return;
+
+	const direction = new THREE.Vector3();
+	player.getWorldDirection(direction);
+
+	if (moveForward) {
+		player.position.add(direction.multiplyScalar(-moveSpeed));
+	}
+	if (rotateUp) {
+		player.rotateX(+rotationSpeed);
+	}
+	if (rotateDown) {
+		player.rotateX(-rotationSpeed);
+	}
+	if (rotateLeft) {
+		player.rotateY(+rotationSpeed);
+	}
+	if (rotateRight) {
+		player.rotateY(-rotationSpeed);
+	}
+}
+
+function onKeyDown(event) {
+	switch (event.keyCode) {
+		case 69: // E
+			moveForward = true;
+			break;
+		case 87: // W
+			rotateUp = true;
+			break;
+		case 83: // S
+			rotateDown = true;
+			break;
+		case 65: // A
+			rotateLeft = true;
+			break;
+		case 68: // D
+			rotateRight = true;
+			break;
+	}
+}
+
+function onKeyUp(event) {
+	switch (event.keyCode) {
+		case 69: // E
+			moveForward = false;
+			break;
+		case 87: // W
+			rotateUp = false;
+			break;
+		case 83: // S
+			rotateDown = false;
+			break;
+		case 65: // A
+			rotateLeft = false;
+			break;
+		case 68: // D
+			rotateRight = false;
+			break;
+	}
+}
+
 function main() {
+	console.log("entrou no main");
 	canvas = document.querySelector('#c');
 	center = 350;
 
@@ -42,65 +122,64 @@ function main() {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 
 	//vr
-	document.body.appendChild(VRButton.createButton(renderer));
+	//document.body.appendChild(VRButton.createButton(renderer));
 	renderer.xr.enabled = true;
 
-	//camera -----------------------------------------------------------------------------
-	const fov = 45;
-	const aspect = 2;
-	const near = 0.1;
-	const far = 5000;
-	camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+	const sessionInit = { optionalFeatures: ['local-floor'] };
+	navigator.xr.requestSession('immersive-vr', sessionInit).then((session) => {
+		renderer.xr.setSession(session);
+	});
 
-	const player = new THREE.Object3D();
-	player.position.set(0, center, 150);
-	player.add(camera);
-	scene.add(player);
-	//camera.position.set(0, center, center);
+	{//camera -----------------------------------------------------------------------------
+		const fov = 45;
+		const aspect = 2;
+		const near = 0.1;
+		const far = 5000;
+		camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+	}
 
-	
+	{//player -----------------------------------------------------------------------------
+		const elementos = createPlayer(camera, life, oxi, combust);
 
+		player = elementos.player;
+		vida = elementos.vida;
+		oxigenio = elementos.oxigenio;
+		combustivel = elementos.combustivel;
+
+		scene.add(player);
+	}
 	//controls -----------------------------------------------------------------------------
-
-	controls = new OrbitControls(camera, canvas);
-	controls.target.set(0, center, 0);
-	controls.update();
-
-	//controls fly -----------------------------------------------------------------------------
-
-	// controls = new FlyControls(player, canvas);
-	// controls.movementSpeed = 0.01;
-	// controls.domElement = canvas;
-	// controls.rollSpeed = Math.PI / 15000;
-
+	// controls = new OrbitControls(camera, canvas);
+	// controls.target.set(0, center, 0);
+	// controls.update();
 
 	{ // cenario_mapa -----------------------------------------------------------------------------
 		const cubeSize = 700;
 		const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-		// const cubeMat = new THREE.MeshPhongMaterial({
-		// 	color: '#CCC',
-		// 	side: THREE.BackSide,
-		// });
-		const cubeMatStar = new THREE.MeshBasicMaterial({
-			map: new THREE.TextureLoader().load(starsTexture),
+		const cubeMat = new THREE.MeshPhongMaterial({
+			color: '#CCC',
 			side: THREE.BackSide,
 		});
-		// const cubeMaterials = [
-		// 	cubeMat,
-		// 	cubeMat,
-		// 	cubeMat,
-		// 	cubeMat,
-		// 	cubeMat,
-		// 	cubeMat,
-		// ];
+		// const cubeMatStar = new THREE.MeshBasicMaterial({
+		// 	map: new THREE.TextureLoader().load(starsTexture),
+		// 	side: THREE.BackSide,
+		// });
 		const cubeMaterials = [
-			cubeMatStar,
-			cubeMatStar,
-			cubeMatStar,
-			cubeMatStar,
-			cubeMatStar,
-			cubeMatStar,
+			cubeMat,
+			cubeMat,
+			cubeMat,
+			cubeMat,
+			cubeMat,
+			cubeMat,
 		];
+		// const cubeMaterials = [
+		// 	cubeMatStar,
+		// 	cubeMatStar,
+		// 	cubeMatStar,
+		// 	cubeMatStar,
+		// 	cubeMatStar,
+		// 	cubeMatStar,
+		// ];
 		const mesh = new THREE.Mesh(cubeGeo, cubeMaterials);
 		mesh.receiveShadow = true;
 		mesh.position.set(0, cubeSize / 2 - 0.1, 0);
@@ -175,6 +254,21 @@ function main() {
 			camera.updateProjectionMatrix();
 		}
 
+		if (life > 0) {
+			//console.log(life);
+			life -= 0.00001
+			vida.geometry = new THREE.BoxGeometry(life, 0.03, 0.03);
+		} else {
+			// Encerrar a sessão VR
+			renderer.xr.getSession().end().then(() => {
+				// Remover o loop de animação
+				renderer.setAnimationLoop(null);
+				life = 0.5;
+				// Exibir novamente o menu
+				document.querySelector('#menu').style.display = 'flex';
+			});
+			
+		}
 		//rotacao
 		sun.rotateY(0.0004);
 		mercury.mesh.rotateY(0.0012);
@@ -198,6 +292,11 @@ function main() {
 		neptune.obj.rotateY(0.0001);
 		pluto.obj.rotateY(0.0007);
 
+		updateCameraMovement();
 		renderer.render(scene, camera);
+
 	});
+
+
+
 }
