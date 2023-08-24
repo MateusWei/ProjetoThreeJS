@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import backTexture from '../assets/backTexture.jpg';
+import sideTexture from '../assets/sideTexture.jpg';
+
 
 function createPlayer(camera, life, oxi, combust) {
     const center = 350;
@@ -7,68 +10,58 @@ function createPlayer(camera, life, oxi, combust) {
 
     const planeWidth = 1;
     const planeHeight = 1;
-
-    const planeTop = new THREE.Mesh(
-        new THREE.PlaneGeometry(planeWidth, planeHeight),
-        new THREE.MeshPhongMaterial({ color: 0xff0000, side: THREE.DoubleSide })
-    );
-    planeTop.receiveShadow = true;
+    const textureLoader = new THREE.TextureLoader();
+    
+    // TOP
+    const planeTop = createPlane(backTexture, planeWidth, planeHeight);
     planeTop.rotation.x = Math.PI / 2;
     player.add(planeTop);
 
-    const planeBottom = new THREE.Mesh(
-        new THREE.PlaneGeometry(planeWidth, planeHeight),
-        new THREE.MeshPhongMaterial({ color: 0x00ff00, side: THREE.DoubleSide })
-    );
-    planeBottom.receiveShadow = true;
+    // BOTTOM
+    const planeBottom = createPlane(backTexture, planeWidth, planeHeight);
     planeBottom.rotation.x = Math.PI / 2;
     player.add(planeBottom);
 
-    const planeLeft = new THREE.Mesh(
-        new THREE.PlaneGeometry(planeHeight, planeWidth),
-        new THREE.MeshPhongMaterial({ color: 0x0000ff, side: THREE.DoubleSide })
-    );
-    planeLeft.receiveShadow = true;
+    // LEFT
+    const planeLeft = createPlane(sideTexture, planeWidth, planeHeight);
     planeLeft.rotation.y = Math.PI / 2;
     player.add(planeLeft);
 
-    const planeRight = new THREE.Mesh(
-        new THREE.PlaneGeometry(planeHeight, planeWidth),
-        new THREE.MeshPhongMaterial({ color: 0xffff00, side: THREE.DoubleSide })
-    );
-    planeRight.receiveShadow = true;
+    // RIGHT
+    const planeRight = createPlane(sideTexture, planeWidth, planeHeight);
     planeRight.rotation.y = -Math.PI / 2;
     player.add(planeRight);
 
-    const planeBack = new THREE.Mesh(
-        new THREE.PlaneGeometry(planeWidth, planeHeight),
-        new THREE.MeshPhongMaterial({ color: 0x000000, side: THREE.DoubleSide })
-    );
-    planeBack.receiveShadow = true;
+    // BACK
+    const planeBack = createPlane(backTexture, planeWidth, planeHeight);
     player.add(planeBack);
 
+    // FRONTUP
     const planeFrontUp = new THREE.Mesh(
         new THREE.PlaneGeometry(planeWidth, planeHeight / 4),
-        new THREE.MeshPhongMaterial({ color: 0x000000, side: THREE.DoubleSide })
+        new THREE.MeshPhongMaterial({ map: textureLoader.load(backTexture), side: THREE.DoubleSide })
     );
     planeFrontUp.receiveShadow = true;
     player.add(planeFrontUp);
-
+    
+    // FRONTDOWN
     const planeFrontDown = new THREE.Mesh(
         new THREE.PlaneGeometry(planeWidth, planeHeight / 1.3),
-        new THREE.MeshPhongMaterial({ color: 0x000000, side: THREE.DoubleSide })
+        new THREE.MeshPhongMaterial({ map: textureLoader.load(backTexture), side: THREE.DoubleSide })
     );
     planeFrontDown.receiveShadow = true;
     player.add(planeFrontDown);
-
+    
+    // TABLE
     const tableUp = new THREE.Mesh(
         new THREE.PlaneGeometry(planeWidth, planeHeight / 5),
-        new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+        new THREE.MeshPhongMaterial({ map: textureLoader.load(backTexture), side: THREE.DoubleSide })
     );
     tableUp.receiveShadow = true;
     tableUp.rotation.x = -Math.PI / 4;
     player.add(tableUp);
-
+    
+    // VIDA
     const vida = new THREE.Mesh(
         new THREE.BoxGeometry(life, 0.03, 0.03),
         new THREE.MeshPhongMaterial({ color: 0x00ff00, side: THREE.DoubleSide })
@@ -76,7 +69,8 @@ function createPlayer(camera, life, oxi, combust) {
     vida.receiveShadow = true;
     vida.rotation.x = -Math.PI / 4;
     player.add(vida);
-
+    
+    //OXI
     const oxigenio = new THREE.Mesh(
         new THREE.BoxGeometry(oxi, 0.03, 0.03),
         new THREE.MeshPhongMaterial({ color: 0x0000ff, side: THREE.DoubleSide })
@@ -84,7 +78,8 @@ function createPlayer(camera, life, oxi, combust) {
     oxigenio.receiveShadow = true;
     oxigenio.rotation.x = -Math.PI / 4;
     player.add(oxigenio);
-
+    
+    //COMBS
     const combustivel = new THREE.Mesh(
         new THREE.BoxGeometry(combust, 0.03, 0.03),
         new THREE.MeshPhongMaterial({ color: 0xff9900, side: THREE.DoubleSide })
@@ -93,10 +88,10 @@ function createPlayer(camera, life, oxi, combust) {
     combustivel.rotation.x = -Math.PI / 4;
     player.add(combustivel);
 
-    const pointLightTop = new THREE.PointLight(0xffffff, 0.5, 3);
+    const pointLightTop = new THREE.PointLight(0xffffff, 1, 2);
     player.add(pointLightTop);
+    pointLightTop.position.set(0, 1.7, 0);
 
-    pointLightTop.position.set(0, 1.7 + 0.2, 0);
     vida.position.set(0, 1.49, -0.43);
     oxigenio.position.set(0, 1.46, -0.4);
     combustivel.position.set(0, 1.43, -0.37);
@@ -112,6 +107,19 @@ function createPlayer(camera, life, oxi, combust) {
     player.add(camera);
 
     return {player, vida, oxigenio, combustivel};
+}
+
+function createPlane(texture, planeWidth, planeHeight){
+    const textureLoader = new THREE.TextureLoader();
+    const geo = new THREE.PlaneGeometry(planeWidth, planeHeight);
+    const mat = new THREE.MeshPhongMaterial({
+        map: textureLoader.load(texture),
+        side: THREE.DoubleSide
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    return mesh;
 }
 
 export { createPlayer }
